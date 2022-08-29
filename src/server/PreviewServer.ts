@@ -24,6 +24,7 @@ interface ServerConnectionInfo {
   port: number
   host: string
   url: string
+  family: AddressInfo['family']
 }
 
 interface CacheEntry {
@@ -119,6 +120,7 @@ export class PreviewServer {
           port,
           host: address,
           url,
+          family,
         }
         this.connection = connection
         this.log('preview server established at %s', url)
