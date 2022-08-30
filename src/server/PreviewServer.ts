@@ -24,6 +24,7 @@ interface ServerConnectionInfo {
   port: number
   host: string
   url: string
+  family: AddressInfo['family']
 }
 
 interface CacheEntry {
@@ -73,7 +74,7 @@ export class PreviewServer {
 
     if (name === 'webpackConfig') {
       const prevBaseConfig = this.baseWebpackConfig
-      const nextWebpackConfig = value as any
+      const nextWebpackConfig = value as unknown as Configuration
       this.baseWebpackConfig = merge(prevBaseConfig, nextWebpackConfig || {})
     }
   }
@@ -109,12 +110,16 @@ export class PreviewServer {
       this.log('establishing server connection...')
 
       const connection = this.app.listen(port, host, () => {
-        const { address, port } = connection.address() as AddressInfo
-        const url = `http://${address}:${port}`
+        const { address, port, family } = connection.address() as AddressInfo
+        // IPv6 host requires surrounding square brackets when serialized to URL
+        // note: IPv6 host can take many forms, e.g. `::` and `::1` are both ok
+        const serializedAddress = family === 'IPv6' ? `[${address}]` : address
+        const url = `http://${serializedAddress}:${port}`
         this.connectionInfo = {
           port,
           host: address,
           url,
+          family,
         }
         this.connection = connection
         this.log('preview server established at %s', url)
